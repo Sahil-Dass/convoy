@@ -1,77 +1,63 @@
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet } from "react-native";
-import { Card, RadioButton, Text, Button } from "react-native-paper";
+import React from "react";
+import { View, StyleSheet, ScrollView } from "react-native";
+import { Appbar, List, Switch, Button, Divider, Text } from "react-native-paper";
 import { useAuth } from "../../src/auth/AuthProvider";
-import { LocationSharingMode, subscribeToUserSettings, setRideActive, updateLocationSharingMode } from "../../src/data/userSettings";
+import { useRouter } from "expo-router";
 
-export default function SettingsTab() {
-  const { user } = useAuth();
-  const [mode, setMode] = useState<LocationSharingMode>("always");
-  const [rideActive, setRideActiveState] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    return subscribeToUserSettings(user.uid, (s) => {
-      setMode(s.locationSharingMode);
-      setRideActiveState(!!s.rideActive);
-    });
-  }, [user]);
-
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ color: "#F9FAFB" }}>Sign in to change settings.</Text>
-      </View>
-    );
-  }
+export default function SettingsScreen() {
+  const { signOut, user } = useAuth();
+  const router = useRouter();
+  const [isDark, setIsDark] = React.useState(true);
+  const [units, setUnits] = React.useState(true); // true = metric
 
   return (
-    <View style={styles.container}>
-      <Text variant="headlineSmall" style={{ color: "#F9FAFB", marginBottom: 12 }}>
-        Settings
-      </Text>
+    <View style={s.c}>
+      <Appbar.Header style={{ backgroundColor: "#020617" }}>
+        <Appbar.BackAction color="#F9FAFB" onPress={() => router.back()} />
+        <Appbar.Content title="Settings" titleStyle={{ color: "#F9FAFB" }} />
+      </Appbar.Header>
 
-      <Card style={styles.card}>
-        <Card.Content>
-          <Text style={{ color: "#F9FAFB", marginBottom: 8 }}>Location sharing</Text>
+      <ScrollView>
+        <List.Section>
+          <List.Subheader style={{color: "#F97316"}}>Display</List.Subheader>
+          <List.Item
+            title="Units of Measure"
+            description={units ? "Metric (km, m)" : "Imperial (mi, ft)"}
+            titleStyle={{color: "white"}}
+            descriptionStyle={{color: "#94A3B8"}}
+            right={() => <Switch value={units} onValueChange={setUnits} color="#F97316" />}
+          />
+        </List.Section>
+        <Divider style={{backgroundColor: "#1E293B"}} />
 
-          <RadioButton.Group
-            value={mode}
-            onValueChange={async (v) => {
-              const next = v as LocationSharingMode;
-              setMode(next);
-              await updateLocationSharingMode(user.uid, next);
-            }}
-          >
-            <RadioButton.Item label="Always (default)" value="always" />
-            <RadioButton.Item label="Ride only" value="rideOnly" />
-            <RadioButton.Item label="Off" value="off" />
-          </RadioButton.Group>
+        <List.Section>
+          <List.Subheader style={{color: "#F97316"}}>Account</List.Subheader>
+          <List.Item
+             title="Email"
+             description={user?.email}
+             titleStyle={{color: "white"}}
+             descriptionStyle={{color: "#94A3B8"}}
+             left={props => <List.Icon {...props} icon="email-outline" color="#94A3B8"/>}
+          />
+          <List.Item
+             title="Privacy Controls"
+             titleStyle={{color: "white"}}
+             left={props => <List.Icon {...props} icon="lock-outline" color="#94A3B8"/>}
+             right={props => <List.Icon {...props} icon="chevron-right" color="#94A3B8"/>}
+          />
+        </List.Section>
 
-          {mode === "rideOnly" ? (
-            <View style={{ marginTop: 10, gap: 8 }}>
-              <Text style={{ color: "#9CA3AF" }}>
-                Turn Ride Active ON only while you’re riding.
-              </Text>
-              <Button
-                mode={rideActive ? "contained" : "outlined"}
-                onPress={async () => {
-                  const next = !rideActive;
-                  setRideActiveState(next);
-                  await setRideActive(user.uid, next);
-                }}
-              >
-                {rideActive ? "Ride Active: ON" : "Ride Active: OFF"}
-              </Button>
-            </View>
-          ) : null}
-        </Card.Content>
-      </Card>
+        <View style={{padding: 20, marginTop: 20}}>
+          <Button mode="outlined" textColor="#EF4444" style={{borderColor: "#EF4444"}} onPress={() => { signOut(); router.replace("/auth"); }}>
+            Log Out
+          </Button>
+          <Text style={{textAlign: "center", color: "#475569", marginTop: 20, fontSize: 12}}>Version 1.0.0 (Build 2025)</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#020617", padding: 16 },
-  card: { backgroundColor: "#0B1120", borderRadius: 18 },
+const s = StyleSheet.create({
+  c: { flex: 1, backgroundColor: "#020617" }
 });

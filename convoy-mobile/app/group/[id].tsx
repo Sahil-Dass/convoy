@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useState } from "react";
-import { View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { View, StyleSheet, FlatList, TouchableOpacity, Linking } from "react-native";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { Text, Appbar, Avatar, Menu, ActivityIndicator, Dialog, Portal, Button } from "react-native-paper";
 import { useAuth } from "../../src/auth/AuthProvider";
@@ -117,6 +117,24 @@ export default function GroupDetailsScreen() {
         />
 
         <Appbar.Action icon="map-outline" color="#F9FAFB" onPress={() => router.push(`/group/${groupId}/map`)} />
+
+        <Appbar.Action
+          icon="pencil-outline"
+          color="#F9FAFB"
+          onPress={() => router.push(`/group/${groupId}/edit-route`)}
+        />
+
+        <Appbar.Action
+          icon="navigation-variant"
+          color="#F9FAFB"
+          onPress={() => {
+            const end = (group as any)?.endPoint;
+            if (!end?.lat || !end?.lng) return;
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${end.lat},${end.lng}&dir_action=navigate`;
+            Linking.openURL(url).catch(() => {});
+          }}
+        />
+
 
         {showMenu ? (
           <Menu

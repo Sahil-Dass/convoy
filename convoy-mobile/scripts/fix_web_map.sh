@@ -1,3 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /workspaces/convoy/convoy-mobile
+
+mkdir -p src/components
+
+# 1. Native Map Implementation (Android/iOS)
+cat > "src/components/RideMap.native.tsx" <<'EOF'
+import React from "react";
+import MapView, { Polyline, PROVIDER_GOOGLE } from "react-native-maps";
+import { StyleSheet, View } from "react-native";
+
+export default function RideMap({ path, initialRegion, liteMode = false }: any) {
+  return (
+    <MapView
+      provider={PROVIDER_GOOGLE}
+      style={StyleSheet.absoluteFill}
+      liteMode={liteMode}
+      initialRegion={initialRegion}
+      scrollEnabled={!liteMode}
+      zoomEnabled={!liteMode}
+    >
+      {path && path.length > 0 && (
+        <Polyline coordinates={path} strokeColor="#F97316" strokeWidth={3} />
+      )}
+    </MapView>
+  );
+}
+EOF
+
+# 2. Web Fallback (Just a placeholder image/text)
+cat > "src/components/RideMap.web.tsx" <<'EOF'
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+
+export default function RideMap({ path }: any) {
+  return (
+    <View style={s.container}>
+      <Text style={s.text}>Map View (Mobile Only)</Text>
+      {path && <Text style={s.sub}>{path.length} points</Text>}
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#1E293B", alignItems: "center", justifyContent: "center" },
+  text: { color: "#94A3B8", fontWeight: "bold" },
+  sub: { color: "#64748B", fontSize: 12 }
+});
+EOF
+
+# 3. Patch Home.tsx to use this safe component
+cat > "app/(tabs)/home.tsx" <<'EOF'
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, FlatList, RefreshControl } from "react-native";
 import { Appbar, Card, Text, Avatar } from "react-native-paper";
@@ -41,7 +94,7 @@ export default function FeedScreen() {
     }
 
     return (
-      <TouchableOpacity activeOpacity={0.9} onPress={() => router.push(`/(tabs)/activity/${item.id}`)}><Card style={s.card}>
+      <Card style={s.card}>
         <Card.Title
           title={item.createdBy || "Rider"}
           subtitle={item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleString() : ""}
@@ -69,7 +122,7 @@ export default function FeedScreen() {
            {/* Use the safe component here */}
            <RideMap path={item.path} initialRegion={region} liteMode={true} />
         </View>
-      </Card></TouchableOpacity>
+      </Card>
     );
   };
 
@@ -98,3 +151,7 @@ const s = StyleSheet.create({
   statValue: { fontSize: 18, color: "#F9FAFB", fontWeight: "600" },
   mapContainer: { height: 200, marginTop: 0, borderRadius: 0, overflow: 'hidden' }
 });
+EOF
+
+rm -rf .expo node_modules/.cache
+echo "Done. Web map crash fixed. Run: npx expo start --tunnel --clear"

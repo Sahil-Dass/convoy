@@ -1,3 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /workspaces/convoy/convoy-mobile
+
+cat > "app/(tabs)/_layout.tsx" <<'EOF'
 import React from "react";
 import { Tabs } from "expo-router";
 import { LocationTracker } from "../../src/location/LocationTracker";
@@ -75,3 +80,7 @@ export default function TabsLayout() {
     </>
   );
 }
+EOF
+
+rm -rf .expo node_modules/.cache
+echo "Done. Fixed duplicate screen error. Run: npx expo start --tunnel --clear"

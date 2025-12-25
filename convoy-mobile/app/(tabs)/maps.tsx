@@ -1,80 +1,73 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import { Text, Card, Button, Avatar } from "react-native-paper";
+import { Appbar, Searchbar, SegmentedButtons, Card, Text, FAB } from "react-native-paper";
 import { useRouter } from "expo-router";
-import { useAuth } from "../../src/auth/AuthProvider";
-import { Group, subscribeToGroups, subscribeToMyGroupIds } from "../../src/data/groups";
 
-type GroupVM = Group & { isMember: boolean };
-
-export default function MapTab() {
-  const { user } = useAuth();
+export default function MapsScreen() {
   const router = useRouter();
-
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [myGroupIds, setMyGroupIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => subscribeToGroups(setGroups), []);
-
-  useEffect(() => {
-    if (!user) {
-      setMyGroupIds(new Set());
-      return;
-    }
-    return subscribeToMyGroupIds(user.uid, setMyGroupIds);
-  }, [user]);
-
-  const myGroups: GroupVM[] = useMemo(
-    () => groups.map((g) => ({ ...g, isMember: myGroupIds.has(g.id) })).filter((g) => g.isMember),
-    [groups, myGroupIds]
-  );
-
-  if (!user) {
-    return (
-      <View style={styles.center}>
-        <Text style={{ color: "#F9FAFB" }}>Sign in to view maps.</Text>
-      </View>
-    );
-  }
+  const [scope, setScope] = useState("routes"); // routes | segments
+  const [search, setSearch] = useState("");
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text variant="headlineSmall" style={{ color: "#F9FAFB" }}>Maps</Text>
-      <Text style={{ color: "#9CA3AF" }}>
-        Select a group to see live member locations.
-      </Text>
+    <View style={s.c}>
+      <Appbar.Header style={{ backgroundColor: "#020617" }}>
+        <Appbar.Content title="Maps" titleStyle={{ color: "#F9FAFB", fontWeight: "bold" }} />
+      </Appbar.Header>
 
-      {myGroups.map((g) => (
-        <TouchableOpacity key={g.id} activeOpacity={0.85} onPress={() => router.push(`/group/${g.id}/map`)}>
-          <Card style={styles.card}>
-            <Card.Content style={styles.row}>
-              <Avatar.Text size={40} label={g.name[0]} style={styles.avatar} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: "#F9FAFB" }} variant="titleMedium">{g.name}</Text>
-                <Text style={{ color: "#9CA3AF", fontSize: 12 }}>{g.memberCount} riders · {g.level}</Text>
-              </View>
-              <Button mode="contained" style={{ borderRadius: 999 }} onPress={() => router.push(`/group/${g.id}/map`)}>
-                Open
-              </Button>
-            </Card.Content>
-          </Card>
-        </TouchableOpacity>
-      ))}
+      <View style={{padding: 12}}>
+        <Searchbar 
+          placeholder="Search for routes..." 
+          value={search} 
+          onChangeText={setSearch} 
+          style={{backgroundColor: "#1E293B", color: "white"}} 
+          inputStyle={{color: "white"}}
+          iconColor="#94A3B8"
+        />
+        <SegmentedButtons
+          value={scope}
+          onValueChange={setScope}
+          buttons={[
+            { value: 'routes', label: 'Routes', checkedColor: "white", style: {backgroundColor: scope==='routes'?'#F97316':'transparent'} },
+            { value: 'segments', label: 'Segments', checkedColor: "white", style: {backgroundColor: scope==='segments'?'#F97316':'transparent'} },
+          ]}
+          style={{marginTop: 12}}
+          theme={{colors: {secondaryContainer: "transparent"}}}
+        />
+      </View>
 
-      {myGroups.length === 0 ? (
-        <Text style={{ color: "#9CA3AF", marginTop: 12 }}>
-          You are not in any group yet.
+      <ScrollView contentContainerStyle={{padding: 12}}>
+        <Text variant="titleMedium" style={{color: "white", marginBottom: 10, fontWeight: "bold"}}>
+           {scope === 'routes' ? "Nearby Routes" : "Popular Segments"}
         </Text>
-      ) : null}
-    </ScrollView>
+        
+        {/* Mock Items */}
+        {[1,2,3].map(i => (
+           <Card key={i} style={s.card} onPress={() => {}}>
+             <Card.Cover source={{ uri: "https://via.placeholder.com/300x150/1E293B/FFFFFF?text=Map+Preview" }} style={{height: 120}} />
+             <Card.Title 
+                title={scope === 'routes' ? `Scenic Loop ${i}` : `Sprint Segment ${i}`} 
+                subtitle="25 km • 320m elev" 
+                titleStyle={{color: "white", fontWeight: "bold"}} 
+                subtitleStyle={{color: "#94A3B8"}} 
+                right={(props) => <FAB icon={scope==='routes'?"star-outline":"trophy-outline"} small style={{backgroundColor: "transparent", elevation: 0}} color="#F97316" onPress={()=>{}} />}
+             />
+           </Card>
+        ))}
+      </ScrollView>
+      
+      <FAB
+         icon="pencil-plus"
+         label="Create Route"
+         style={s.fab}
+         color="white"
+         onPress={() => {}} // Could link to a route builder tool
+      />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#020617" },
-  content: { padding: 16, gap: 12, paddingBottom: 32 },
-  center: { flex: 1, backgroundColor: "#020617", justifyContent: "center", alignItems: "center" },
-  card: { backgroundColor: "#0B1120", borderRadius: 18 },
-  row: { flexDirection: "row", alignItems: "center", gap: 12 },
-  avatar: { backgroundColor: "#F97316" },
+const s = StyleSheet.create({
+  c: { flex: 1, backgroundColor: "#020617" },
+  card: { marginBottom: 12, backgroundColor: "#0B1120" },
+  fab: { position: "absolute", margin: 16, right: 0, bottom: 0, backgroundColor: "#F97316" }
 });

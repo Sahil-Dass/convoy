@@ -62,6 +62,10 @@ export default function GroupDetails() {
       {err ? <Text style={s.err}>{err}</Text> : null}
 
       <View style={s.row}>
+      <Link href={{ pathname: "/(tabs)/rides/[id]/map", params: { id: String(id) } }} asChild>
+        <Pressable style={s.b2}><Text style={s.bt}>Live Map</Text></Pressable>
+      </Link>
+
         <Link href={{ pathname: "/(tabs)/rides/[id]/members", params: { id: String(id) } }} asChild>
           <Pressable style={s.b2}><Text style={s.bt}>Members</Text></Pressable>
         </Link>

@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /workspaces/convoy/convoy-mobile
+
+# 1. ADD CHALLENGES TAB TO GROUPS SCREEN
+# We are rewriting groups.tsx to have two sub-tabs: "Clubs" and "Challenges"
+cat > "app/(tabs)/groups.tsx" <<'EOF'
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, useWindowDimensions } from "react-native";
 import { Appbar, Card, Text, Avatar, FAB, SegmentedButtons, ProgressBar } from "react-native-paper";
@@ -108,3 +115,11 @@ const s = StyleSheet.create({
   card: { marginBottom: 12, backgroundColor: "#0B1120" },
   fab: { position: "absolute", margin: 16, right: 0, bottom: 0, backgroundColor: "#F97316" }
 });
+EOF
+
+# 2. UPGRADE PROFILE WITH TRAINING LOG (Calendar)
+# We append a "Training Log" section to profile.tsx
+sed -i 's/<Text variant="titleMedium" style={{ color: "#F9FAFB", marginBottom: 12, fontWeight: "bold" }}>Gear<\/Text>/<Text variant="titleMedium" style={{ color: "#F9FAFB", marginBottom: 12, fontWeight: "bold" }}>Training Log<\/Text>\n        <View style={{flexDirection: "row", flexWrap: "wrap", gap: 4, marginBottom: 24}}>\n           {[...Array(28)].map((_, i) => (\n              <View key={i} style={{width: 30, height: 30, borderRadius: 15, backgroundColor: Math.random() > 0.7 ? "#F97316" : "#1E293B", alignItems: "center", justifyContent: "center"}}>\n                 <Text style={{color: "white", fontSize: 10}}>{i+1}<\/Text>\n              <\/View>\n           ))}\n        <\/View>\n\n        <Text variant="titleMedium" style={{ color: "#F9FAFB", marginBottom: 12, fontWeight: "bold" }}>Gear<\/Text>/' "app/(tabs)/profile.tsx"
+
+rm -rf .expo node_modules/.cache
+echo "Done. Final Strava Features Added. Run: npx expo start --tunnel --clear"
