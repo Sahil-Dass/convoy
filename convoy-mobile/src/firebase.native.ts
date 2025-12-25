@@ -1,18 +1,16 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
-import { initializeAuth } from "firebase/auth";
-import { getReactNativePersistence } from "firebase/auth/react-native";
+import { initializeAuth, getReactNativePersistence } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBzVkR2gYqY7_Wssn5ZjFS0MelZuP8-5nU",
-  authDomain: "convoy-4e35a.firebaseapp.com",
-  projectId: "convoy-4e35a",
-  storageBucket: "convoy-4e35a.firebasestorage.app",
-  messagingSenderId: "341548138392",
-  appId: "1:341548138392:web:0524b1db7dc204789875ed",
-  measurementId: "G-RPSWBQSJ4C",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY!,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID!,
 };
 
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);

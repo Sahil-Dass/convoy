@@ -1,3 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /workspaces/convoy/convoy-mobile
+
+TS="$(date +%Y%m%d_%H%M%S)"
+BK="/tmp/convoy_userprofile_fix_$TS"
+mkdir -p "$BK"
+cp -f src/data/userProfile.ts "$BK/userProfile.ts.bak" 2>/dev/null || true
+cp -f "app/(tabs)/_layout.tsx" "$BK/tabs_layout.tsx.bak" 2>/dev/null || true
+echo "Backup: $BK"
+
+cat > src/data/userProfile.ts <<'EOF'
 import { auth, db } from "../firebase";
 import { doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
@@ -68,3 +80,9 @@ export async function setLocationSharingEnabled(uid: string, enabled: boolean) {
     updatedAt: serverTimestamp(),
   });
 }
+EOF
+
+# remove invalid Tabs.Screen name "map.web" if present
+perl -0777 -i -pe 's/\n\s*<Tabs\.Screen name="map\.web" options=\{\{ href: null \}\} \/>\s*//g' "app/(tabs)/_layout.tsx" || true
+
+rm -rf .expo node_modules/.cache
