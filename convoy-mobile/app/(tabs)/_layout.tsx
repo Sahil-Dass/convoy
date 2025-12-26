@@ -3,13 +3,12 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../src/auth/AuthProvider";
 import { ActivityIndicator, View } from "react-native";
-import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
-import { useColorScheme } from "react-native";
+import { useThemeContext } from "../../src/context/ThemeContext";
+import { PaperProvider } from "react-native-paper";
 
 export default function TabLayout() {
   const { loading } = useAuth();
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
+  const { theme } = useThemeContext();
 
   if (loading) {
     return (
@@ -36,7 +35,6 @@ export default function TabLayout() {
           tabBarLabelStyle: { fontSize: 10, fontWeight: "bold" },
         }}
       >
-        {/* === VISIBLE TABS === */}
         <Tabs.Screen
           name="home"
           options={{
@@ -44,13 +42,16 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <Ionicons name="home" size={28} color={color} />,
           }}
         />
+        
+        {/* CORRECTED: Point to 'maps/index' but call it 'Maps' */}
         <Tabs.Screen
-          name="maps"
+          name="maps/index"
           options={{
             title: "Maps",
             tabBarIcon: ({ color }) => <Ionicons name="map-outline" size={26} color={color} />,
           }}
         />
+
         <Tabs.Screen
           name="record"
           options={{
@@ -73,20 +74,27 @@ export default function TabLayout() {
           }}
         />
 
-        {/* === HIDDEN FILES (Prevent them from being tabs) === */}
-        <Tabs.Screen name="index" options={{ href: null }} />
+        {/* HIDE ALL INTERNAL FILES */}
         <Tabs.Screen name="settings" options={{ href: null }} />
         <Tabs.Screen name="edit-profile" options={{ href: null }} />
         <Tabs.Screen name="security" options={{ href: null }} />
         <Tabs.Screen name="activity/[id]" options={{ href: null }} />
+        
+        {/* Fix: 'rides' is the folder/file name, not rides/[id] if it wasn't scanned that way */}
+        <Tabs.Screen name="rides" options={{ href: null }} />
+        
         <Tabs.Screen name="calendar" options={{ href: null }} />
         <Tabs.Screen name="map" options={{ href: null }} />
         <Tabs.Screen name="marketplace" options={{ href: null }} />
         <Tabs.Screen name="two" options={{ href: null }} />
         <Tabs.Screen name="explore" options={{ href: null }} />
-        <Tabs.Screen name="maps/create" options={{ href: null }} />
-        <Tabs.Screen name="rides" options={{ href: null }} />
         
+        {/* Hide extra maps routes */}
+        <Tabs.Screen name="maps/create" options={{ href: null }} />
+        
+        {/* Hide 'index' if it refers to the root tab index (redirects usually handle this) */}
+        <Tabs.Screen name="index" options={{ href: null }} />
+
       </Tabs>
     </PaperProvider>
   );

@@ -1,14 +1,16 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { AuthProvider, useAuth } from "../src/auth/AuthProvider";
 import { PaperProvider } from "react-native-paper";
-import { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
+import { useEffect, useState } from "react";
 import { checkOnboardingStatus } from "../src/data/userProfile";
+import { ThemeProvider, useThemeContext } from "../src/context/ThemeContext";
 
 function RootLayoutNav() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
+  const { theme } = useThemeContext();
   const [checkingOnboard, setCheckingOnboard] = useState(false);
 
   useEffect(() => {
@@ -19,22 +21,13 @@ function RootLayoutNav() {
 
     const verifyRoute = async () => {
       if (!user) {
-        // Not logged in? Go to /auth
-        if (!inAuthGroup) {
-          router.replace("/auth");
-        }
+        if (!inAuthGroup) router.replace("/auth");
       } else {
-        // Logged in? Check Onboarding
         if (inAuthGroup) {
           setCheckingOnboard(true);
           const needsOnboard = await checkOnboardingStatus(user.uid);
           setCheckingOnboard(false);
-
-          if (needsOnboard) {
-            router.replace("/onboarding");
-          } else {
-            router.replace("/(tabs)/home");
-          }
+          router.replace(needsOnboard ? "/onboarding" : "/(tabs)/home");
         }
       }
     };
@@ -43,17 +36,16 @@ function RootLayoutNav() {
 
   if (loading || checkingOnboard) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#000" }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.colors.background }}>
         <ActivityIndicator size="large" color="#F97316" />
       </View>
     );
   }
 
   return (
-    <PaperProvider>
-      <Stack screenOptions={{ headerShown: false }}>
+    <PaperProvider theme={theme}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        {/* Simple 'auth' route (mapped to app/auth.tsx) */}
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       </Stack>
@@ -63,8 +55,10 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

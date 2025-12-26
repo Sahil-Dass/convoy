@@ -1,110 +1,93 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, FlatList, TouchableOpacity, useWindowDimensions } from "react-native";
-import { Appbar, Card, Text, Avatar, FAB, SegmentedButtons, ProgressBar } from "react-native-paper";
+import { View, StyleSheet, FlatList, RefreshControl, Image } from "react-native";
+import { Appbar, Card, Text, Button, FAB, ActivityIndicator } from "react-native-paper";
 import { useRouter } from "expo-router";
-import { collection, query, getDocs } from "firebase/firestore";
-import { db } from "../../src/firebase";
+import { useAuth } from "../../src/auth/AuthProvider";
+import { useThemeContext } from "../../src/context/ThemeContext"; // Theme
+import { getUserGroups } from "../../src/data/groups";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function GroupsScreen() {
   const router = useRouter();
-  const [scope, setScope] = useState("clubs"); // clubs | challenges
-  const [items, setItems] = useState<any[]>([]);
+  const { user } = useAuth();
+  const { theme } = useThemeContext(); // Get Theme
+  const [groups, setGroups] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    // Mock data fetch - in real app, fetch "clubs" or "challenges" collection
-    if (scope === 'clubs') {
-       // Fetch Clubs (existing logic)
-       (async () => {
-         try {
-           const q = query(collection(db, "groups"));
-           const snap = await getDocs(q);
-           setItems(snap.docs.map(d => ({ id: d.id, type: 'club', ...d.data() })));
-         } catch(e) {}
-       })();
-    } else {
-       // Mock Challenges
-       setItems([
-         { id: 'c1', type: 'challenge', title: 'December Gran Fondo', goal: '100 km', progress: 0.65, daysLeft: 6 },
-         { id: 'c2', type: 'challenge', title: 'Year End Climbing', goal: '2000 m', progress: 0.3, daysLeft: 6 },
-       ]);
+  const loadGroups = async () => {
+    if (!user) return;
+    try {
+      const data = await getUserGroups(user.uid);
+      setGroups(data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  }, [scope]);
+  };
 
-  const renderClub = ({ item }: any) => (
-    <TouchableOpacity onPress={() => router.push(`/group/${item.id}`)} activeOpacity={0.8}>
-      <Card style={s.card}>
-        <Card.Title
-          title={item.name}
-          subtitle={`${item.memberCount || 1} members • ${item.location || "Global"}`}
-          left={(props) => <Avatar.Text {...props} label={item.name?.[0] || "C"} style={{backgroundColor: "#F97316"}} />}
-          titleStyle={{ color: "white", fontWeight: "bold" }}
-          subtitleStyle={{ color: "#94A3B8" }}
+  useEffect(() => { loadGroups(); }, [user]);
+
+  const renderGroup = ({ item }: any) => (
+    <Card 
+      style={[s.card, { backgroundColor: theme.colors.surface }]} // Dynamic BG
+      onPress={() => router.push(`/group/${item.id}`)}
+    >
+      <View style={{ flexDirection: "row", padding: 15, alignItems: "center" }}>
+        <Image 
+          source={{ uri: item.photoURL || "https://i.pravatar.cc/100?u=" + item.id }} 
+          style={{ width: 60, height: 60, borderRadius: 10, backgroundColor: "#333" }} 
         />
-      </Card>
-    </TouchableOpacity>
-  );
-
-  const renderChallenge = ({ item }: any) => (
-    <Card style={s.card}>
-       <Card.Content>
-         <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
-            <Avatar.Icon size={40} icon="trophy-outline" style={{backgroundColor: "rgba(249,115,22,0.2)"}} color="#F97316" />
-            <View style={{marginLeft: 12, flex: 1}}>
-               <Text style={{color: "white", fontWeight: "bold", fontSize: 16}}>{item.title}</Text>
-               <Text style={{color: "#94A3B8"}}>{item.daysLeft} days left</Text>
-            </View>
-         </View>
-         <View style={{marginBottom: 6, flexDirection: 'row', justifyComponent: 'space-between'}}>
-            <Text style={{color: "#94A3B8", fontSize: 12}}>Progress</Text>
-            <Text style={{color: "#F97316", fontSize: 12, fontWeight: 'bold'}}>{(item.progress * 100).toFixed(0)}%</Text>
-         </View>
-         <ProgressBar progress={item.progress} color="#F97316" style={{height: 6, borderRadius: 3, backgroundColor: "#334155"}} />
-         <Text style={{color: "#64748B", fontSize: 11, marginTop: 6, textAlign: 'right'}}>Goal: {item.goal}</Text>
-       </Card.Content>
+        <View style={{ marginLeft: 15, flex: 1 }}>
+          <Text variant="titleMedium" style={{ fontWeight: "bold", color: theme.colors.onSurface }}>{item.name}</Text>
+          <Text variant="bodySmall" style={{ color: "gray" }}>
+             {item.memberCount || 1} Members • {item.sport || "Cycling"}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={24} color="gray" />
+      </View>
     </Card>
   );
 
   return (
-    <View style={s.c}>
-      <Appbar.Header style={{ backgroundColor: "#020617" }}>
-        <Appbar.Content title="Groups" titleStyle={{ color: "#F9FAFB", fontWeight: "bold" }} />
-        <Appbar.Action icon="magnify" color="#F9FAFB" onPress={() => {}} />
+    <View style={[s.container, { backgroundColor: theme.colors.background }]}>
+      <Appbar.Header style={{ backgroundColor: theme.colors.surface, elevation: 0 }}>
+        <Appbar.Content title="Groups" titleStyle={{ fontWeight: "bold", color: theme.colors.onSurface }} />
+        <Appbar.Action icon="magnify" color={theme.colors.onSurface} onPress={() => {}} />
       </Appbar.Header>
 
-      <View style={{padding: 12}}>
-        <SegmentedButtons
-          value={scope}
-          onValueChange={setScope}
-          buttons={[
-            { value: 'clubs', label: 'Clubs', checkedColor: "white", style: {backgroundColor: scope==='clubs'?'#F97316':'transparent'} },
-            { value: 'challenges', label: 'Challenges', checkedColor: "white", style: {backgroundColor: scope==='challenges'?'#F97316':'transparent'} },
-          ]}
-          theme={{colors: {secondaryContainer: "transparent"}}}
-        />
-      </View>
-
       <FlatList
-        data={items}
-        renderItem={scope === 'clubs' ? renderClub : renderChallenge}
+        data={groups}
+        renderItem={renderGroup}
         keyExtractor={i => i.id}
-        contentContainerStyle={{ padding: 12 }}
-        ListEmptyComponent={<Text style={{textAlign: "center", color: "#64748B", marginTop: 40}}>No items found.</Text>}
+        contentContainerStyle={{ padding: 15 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={loadGroups} colors={["#F97316"]} />}
+        ListEmptyComponent={
+          !loading ? (
+            <View style={{ alignItems: "center", marginTop: 50 }}>
+               <Ionicons name="people-outline" size={60} color="gray" />
+               <Text style={{ color: "gray", marginTop: 10 }}>You haven't joined any groups yet.</Text>
+               <Button mode="contained" buttonColor="#F97316" style={{ marginTop: 20 }} onPress={() => {}}>Find a Club</Button>
+            </View>
+          ) : null
+        }
       />
 
-      {scope === 'clubs' && (
-        <FAB
-          icon="plus"
-          style={s.fab}
-          color="white"
-          onPress={() => router.push("/(tabs)/rides/create")}
-        />
-      )}
+      <FAB
+        icon="plus"
+        label="Create Group"
+        style={[s.fab, { backgroundColor: theme.colors.primary }]}
+        color="white"
+        onPress={() => router.push("/(tabs)/groups/create")} // You might need to create this route later
+      />
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  c: { flex: 1, backgroundColor: "#020617" },
-  card: { marginBottom: 12, backgroundColor: "#0B1120" },
-  fab: { position: "absolute", margin: 16, right: 0, bottom: 0, backgroundColor: "#F97316" }
+  container: { flex: 1 },
+  card: { marginBottom: 10, borderRadius: 10 },
+  fab: { position: 'absolute', margin: 16, right: 0, bottom: 0 },
 });

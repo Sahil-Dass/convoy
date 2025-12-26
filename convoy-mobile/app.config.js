@@ -1,29 +1,41 @@
-import 'dotenv/config';
-import appJson from './app.json';
-
-export default ({ config }) => {
-  const base = appJson.expo ?? config;
-
-  const key = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  return {
-    ...base,
+export default {
+  expo: {
+    name: "convoy-mobile",
+    slug: "convoy-mobile",
+    scheme: "convoy",  // <--- Added Scheme
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/icon.png",
+    userInterfaceStyle: "automatic",
+    splash: {
+      image: "./assets/splash.png",
+      resizeMode: "contain",
+      backgroundColor: "#ffffff"
+    },
+    assetBundlePatterns: ["**/*"],
     ios: {
-      ...(base.ios ?? {}),
-      config: {
-        ...((base.ios && base.ios.config) ?? {}),
-        googleMapsApiKey: key,
-      },
+      supportsTablet: true
     },
     android: {
-      ...(base.android ?? {}),
-      config: {
-        ...((base.android && base.android.config) ?? {}),
-        googleMaps: {
-          ...(((base.android && base.android.config) && base.android.config.googleMaps) ?? {}),
-          apiKey: key,
-        },
+      adaptiveIcon: {
+        foregroundImage: "./assets/adaptive-icon.png",
+        backgroundColor: "#ffffff"
       },
+      package: "com.anonymous.convoymobile"
     },
-  };
+    web: {
+      favicon: "./assets/favicon.png",
+      bundler: "metro"
+    },
+    plugins: [
+      "expo-router",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Convoy to use your location."
+        }
+      ]
+    ]
+  }
 };
