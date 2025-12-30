@@ -27,15 +27,6 @@ export default {
       favicon: "./assets/favicon.png",
       bundler: "metro"
     },
-    plugins: [
-      "expo-router",
-      "@react-native-community/datetimepicker",
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow Convoy to use your location."
-        }
-      ]
-    ]
+    
   }
 };

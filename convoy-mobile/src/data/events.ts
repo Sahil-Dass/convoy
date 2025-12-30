@@ -9,7 +9,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
-import * as FileSystem from "expo-file-system/legacy";
+import * as FileSystem from "expo-file-system";
 
 export type RideEvent = {
   id: string;
